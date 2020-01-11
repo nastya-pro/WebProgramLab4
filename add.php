@@ -1,13 +1,17 @@
 <?php
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (!empty($_POST['product']) && !empty($_POST['country']) && !empty($_POST['description'])) {
-        session_start();
-        $_SESSION['Item']['product'] = strip_tags(trim($_POST['product']));
-        $_SESSION['Item']['country'] = strip_tags(trim($_POST['country']));
-        $_SESSION['Item']['description'] = strip_tags(trim($_POST['description']));
-        uploadImage();
-        header("Location: index.php?page=catalog");
-        exit;
+        $product = clearData($_POST['product']);
+        $dbh = ibase_connect($host, $user, $pass);
+        $total_items = ibase_fetch_row(ibase_query("SELECT COUNT(*) FROM ITEMS WHERE product='$product'"));
+        if ($total_items[0] < 1) {
+            $country = clearData($_POST['country']);
+            $description = clearData($_POST['description']);
+            $uploadlink = uploadImage();
+            $query = "INSERT INTO ITEMS (PRODUCT,COUNTRY,DESCRIPTION,IMAGE) VALUES ('$product','$country','$description','$uploadlink')";
+            ibase_query($dbh, $query) or die ("Сбой при доступе к БД: " . ibase_errmsg());
+            header("Location: index.php?page=catalog");
+        } else echo 'Такой продукт уже добавлен';
     } else echo 'Полностью заполните форму';
 }
 ?>

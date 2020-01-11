@@ -2,12 +2,18 @@
 session_start();
 if (isset($_POST['login']) && isset($_POST['password'])) {
     $login = clearData($_POST['login']);
-    $password = clearData($_POST['password']);
-    session_start();
-    $_SESSION['ip'] = $_SERVER['REMOTE_ADDR'];
-    $_SESSION['user_login'] = $login;
-    header("Location: index.php?page=main");
-    exit;
+    $password = md5(clearData($_POST['password']));
+    $dbh = ibase_connect($host, $user, $pass);
+    $query = "SELECT * FROM USERS WHERE LOGIN='$login' AND PASSWORD='$password'";
+    $result = ibase_query($dbh, $query);
+
+    if ($row = ibase_fetch_assoc($result)) {
+        session_start();
+        $_SESSION['ip'] = $_SERVER['REMOTE_ADDR'];
+        $_SESSION['user_login'] = $row['LOGIN'];
+        header("Location: index.php?page=main");
+        exit;
+    } else echo 'Вы неправильно ввели логин или пароль';
 }
 
 if (isset($_GET['logout'])) {
@@ -16,6 +22,7 @@ if (isset($_GET['logout'])) {
     header("Location: index.php?page=auth");
     exit;
 }
+if(!(isset($_GET['page']) and $_GET['page'] == "reg"))
 if (!(isset($_SESSION['user_login']) and $_SESSION['ip'] == $_SERVER['REMOTE_ADDR'])) {
     ?>
     <div class="auth">
@@ -25,6 +32,7 @@ if (!(isset($_SESSION['user_login']) and $_SESSION['ip'] == $_SERVER['REMOTE_ADD
             <div class="auth_input"><label>Пароль: <input type="password" name="password"></label></div>
             <div class="auth_input"><input type="submit"></div>
         </form>
+        <button onclick="location.href='index.php?page=reg';">Зарегистрироваться</button>
     </div>
     <?php
 }
